@@ -1,0 +1,81 @@
+---
+title: "cdpo1"
+author: "Lukang Huang"
+date: "2017Äê10ÔÂ15ÈÕ"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Package Description
+
+We have Data matrix X and response data vector Y,We have a losso expression, we want to compute the parameter $\beta$.
+
+First,we choose the penality parameter $\lambda$.
+
+Second, we standarized the $X$ and $Y$.
+
+Last, we use this package to get $\beta$ accroding to the coordinate descent and proximal operator algorithm.
+
+## Simulation result
+
+###Standarize the $X$ and $Y$
+
+
+
+
+
+```{r pr}
+n = 100
+p = 500
+sigma_noise = 0.05
+beta = rep(0,p)
+beta[1:6] = c(5,10,3,80,90,10)
+
+
+XData = matrix(rnorm(n*p,sd=10),nrow=n,ncol=p)
+
+
+#standarize the data
+for(i in 1:500){
+  X.sum <- sum(XData[,i]);
+  for(j in 1:100){
+    XData[j,i] <- XData[j,i] - X.sum/100
+  }
+  X.var <- sum((XData[,i]^2))
+  for(j in 1:100){
+    XData[j,i] <- 10*XData[j,i]/sqrt(X.var)
+  }
+}
+YData = XData %*% beta + rnorm(n, sd = sigma_noise)
+```
+
+###Using the standarized data to run the code
+
+```{r p}
+#Using the standarized data to run the code
+library(cdpo)
+betahat1 <- cdLasso(YData,XData,0.33)$beta
+betahat1[1:10]
+diff1 <- betahat1 - beta
+
+
+
+betahat2<-poLasso(YData, XData, 0.25)$beta
+betahat2[1:10]
+
+cdvalues<- cdLasso(YData,XData,0.33)$Functionvalue
+cdvalues<-log10(cdvalues)
+povalues<-poLasso(YData, XData, 0.25)$Functionvalue
+povalues<-log10(povalues)
+
+
+plot(cdvalues,xlim=c(0,1500),ylim=c(0,4),lwd=0.01,col='red',xlab="Iterate times",ylab="functionvalue",cex=0.1)
+points(povalues,col='green',cex=0.1)
+legend("bottomright",legend=c("cdLasso","poLasso"),col=c("red","green"),lty=1)
+```
+
+
+From the plot, we know coordinate descent algorithm has a faster speed to convergence, but proximal operator algorithm get a smaller lasso function value.
